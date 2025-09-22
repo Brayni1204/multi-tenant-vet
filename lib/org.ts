@@ -1,10 +1,9 @@
 // Ruta: lib/org.ts
 
-import 'server-only'
+import 'server-only' // Esto se queda, porque esta función SÍ es solo del servidor
 
 import { cookies } from 'next/headers'
 import { createClient } from './supabase/server'
-import { redirect } from 'next/navigation'
 
 export const ACTIVE_ORG_COOKIE = 'active_org'
 
@@ -12,7 +11,7 @@ export type Org = {
     id: string
     name: string
 }
-// Ruta: lib/supabase/middleware.ts
+
 export async function get_active_org(): Promise<{
     orgs: Org[]
     activeOrg: Org | null
@@ -39,22 +38,20 @@ export async function get_active_org(): Promise<{
     const formattedOrgs = data.map(item => item.tenants).filter(Boolean) as Org[]
 
     let activeOrg: Org | null = null
-    const active_org_id = cookieStore.get(ACTIVE_ORG_COOKIE)?.value
+    const active_org_id = (await cookieStore).get(ACTIVE_ORG_COOKIE)?.value
 
     if (active_org_id) {
         activeOrg = formattedOrgs.find((org) => org.id === active_org_id) ?? null
     }
 
+    // Si no hay ninguna activa (ej. primer login), usamos la primera de la lista
     if (!activeOrg && formattedOrgs.length > 0) {
         activeOrg = formattedOrgs[0]
-        await set_active_org(activeOrg.id)
+            // Ya no llamamos a set_active_org aquí para evitar un bucle de redirección
+            ; (await
+                // Ya no llamamos a set_active_org aquí para evitar un bucle de redirección
+                cookieStore).set(ACTIVE_ORG_COOKIE, activeOrg.id, { path: '/' })
     }
 
     return { orgs: formattedOrgs, activeOrg }
-}
-
-export async function set_active_org(org_id: string) {
-    'use server'
-    cookies().set(ACTIVE_ORG_COOKIE, org_id, { path: '/' })
-    redirect('/dashboard')
 }
