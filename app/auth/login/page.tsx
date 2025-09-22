@@ -4,16 +4,17 @@ import { createClient } from '@/lib/supabase/client'
 import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 
-
 export default function LoginPage() {
     const supabase = createClient()
-    useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-            if (session) window.location.href = '/dashboard'
-        })
-        return () => subscription.unsubscribe()
-    }, [])
 
+    useEffect(() => {
+        const { data: { subscription } } =
+            supabase.auth.onAuthStateChange((_e, session) => {
+                if (session) window.location.href = '/dashboard'
+            })
+        return () => subscription.unsubscribe()
+        // ⬇️ satisface react-hooks/exhaustive-deps
+    }, [supabase])
 
     return (
         <main className="grid place-items-center min-h-dvh p-6">

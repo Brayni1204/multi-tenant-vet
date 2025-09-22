@@ -3,19 +3,15 @@ import { createServerSupabase } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import OrgSwitcher from '@/components/OrgSwitcher'
 
-
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-    const supabase = createServerSupabase()
+    const supabase = await createServerSupabase()
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) redirect('/login')
 
-
-    // Cargamos orgs del usuario
     const { data: orgs } = await supabase
         .from('organizations')
         .select('id, name')
         .order('name')
-
 
     return (
         <div className="min-h-dvh">
