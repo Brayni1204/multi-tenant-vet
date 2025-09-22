@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Esta configuración mágica a veces soluciona los problemas de 'fetch failed'
-  // Forzando a Next.js a usar una implementación de fetch más estable.
+  // This magic configuration sometimes solves 'fetch failed' issues
+  // by forcing Next.js to use a more stable fetch implementation.
   experimental: {
-    serverComponentsExternalPackages: ['@supabase/ssr'],
+    serverExternalPackages: ['@supabase/ssr'],
   },
 };
 

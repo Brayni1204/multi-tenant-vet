@@ -1,36 +1,10 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
-import { Database } from '../database.types' // <-- Importamos el mapa
+// lib/supabase/client.ts
+import { createBrowserClient } from '@supabase/ssr'
+import { Database } from '../database.types'
 
-export function createClient(request: NextRequest) {
-    let response = NextResponse.next({
-        request: {
-            headers: request.headers,
-        },
-    })
-
-    // Le decimos al cliente que use el mapa con <Database>
-    const supabase = createServerClient<Database>(
+export function createClient() {
+    return createBrowserClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return request.cookies.get(name)?.value
-                },
-                set(name: string, value: string, options: CookieOptions) {
-                    request.cookies.set({ name, value, ...options })
-                    response = NextResponse.next({ request })
-                    response.cookies.set({ name, value, ...options })
-                },
-                remove(name: string, options: CookieOptions) {
-                    request.cookies.set({ name, value: '', ...options })
-                    response = NextResponse.next({ request })
-                    response.cookies.set({ name, value: '', ...options })
-                },
-            },
-        }
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
-
-    return { supabase, response }
 }

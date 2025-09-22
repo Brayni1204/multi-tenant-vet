@@ -1,5 +1,6 @@
 import ClientForm from '@/components/ClientForm'
-import { createServerSupabase } from '@/lib/supabase/server'
+// 👇 CAMBIO 1: Importa 'createClient' en lugar de 'createServerSupabase'
+import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 
 // 👉 Tipo para la fila que traes de 'clients'
@@ -12,10 +13,11 @@ type Client = {
 }
 
 export default async function ClientsPage() {
-    const supabase = await createServerSupabase()
+    // 👇 CAMBIO 2: Llama a createClient() sin 'await'
+    const supabase = createClient()
 
-    const store = await cookies()
-    const activeOrg = store.get('active_org')?.value ?? null
+    const store = cookies()
+    const activeOrg = (await store).get('active_org')?.value ?? null
 
     // ❌ let clients: any[] = []
     let clients: Client[] = [] // ✅
@@ -26,11 +28,12 @@ export default async function ClientsPage() {
             .select('id, full_name, email, phone, created_at')
             .eq('org_id', activeOrg)
             .order('created_at', { ascending: false })
-            .returns<Client[]>()            // ✅ fuerza el tipo de salida
+            .returns<Client[]>() // ✅ fuerza el tipo de salida
 
         clients = data || []
     }
 
+    // ... el resto del componente sigue igual
     return (
         <div className="grid gap-6">
             <h1 className="text-xl font-semibold">Clientes</h1>
