@@ -1,7 +1,6 @@
 // Ruta: lib/org.ts
 
-import 'server-only' // Esto se queda, porque esta función SÍ es solo del servidor
-
+import 'server-only'
 import { cookies } from 'next/headers'
 import { createClient } from './supabase/server'
 
@@ -16,18 +15,22 @@ export async function get_active_org(): Promise<{
     orgs: Org[]
     activeOrg: Org | null
 }> {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = createClient()
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
         return { orgs: [], activeOrg: null }
     }
 
+    // --- CAMBIO CLAVE AQUÍ ---
+    // Cambiamos 'user_tenants' y 'tenants' por las nuevas tablas.
     const { data, error } = await supabase
-        .from('user_tenants')
-        .select('tenants ( id, name )')
+        .from('user_organizations')
+        .select('organizations ( id, name )') // <-- Apuntamos a la tabla 'organizations'
         .eq('user_id', user.id)
 
     if (error) {
@@ -35,22 +38,19 @@ export async function get_active_org(): Promise<{
         return { orgs: [], activeOrg: null }
     }
 
-    const formattedOrgs = data.map(item => item.tenants).filter(Boolean) as Org[]
+    // El resto de la lógica ya es compatible con la nueva estructura
+    const formattedOrgs = data.map((item) => item.organizations).filter(Boolean) as Org[]
 
     let activeOrg: Org | null = null
-    const active_org_id = (await cookieStore).get(ACTIVE_ORG_COOKIE)?.value
+    const active_org_id = cookieStore.get(ACTIVE_ORG_COOKIE)?.value
 
     if (active_org_id) {
         activeOrg = formattedOrgs.find((org) => org.id === active_org_id) ?? null
     }
 
-    // Si no hay ninguna activa (ej. primer login), usamos la primera de la lista
     if (!activeOrg && formattedOrgs.length > 0) {
         activeOrg = formattedOrgs[0]
-            // Ya no llamamos a set_active_org aquí para evitar un bucle de redirección
-            ; (await
-                // Ya no llamamos a set_active_org aquí para evitar un bucle de redirección
-                cookieStore).set(ACTIVE_ORG_COOKIE, activeOrg.id, { path: '/' })
+        cookieStore.set(ACTIVE_ORG_COOKIE, activeOrg.id, { path: '/' })
     }
 
     return { orgs: formattedOrgs, activeOrg }

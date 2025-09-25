@@ -25,7 +25,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
-    "supabase": "^2.40.7",
+    "supabase": "^2.45.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
