@@ -31,7 +31,7 @@ export default function ClientForm({ activeOrgId }: { activeOrgId: string }) {
             phone: formData.get('phone') as string,
             email: formData.get('email') as string,
             address: formData.get('address') as string,
-            tenant_id: activeOrgId, // Aquí se asigna la empresa correcta
+            org_id: activeOrgId, // Aquí se asigna la empresa correcta
         })
 
         if (insertError) {
