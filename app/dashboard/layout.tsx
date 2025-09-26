@@ -38,6 +38,9 @@ export default async function DashboardLayout({
                     <Link href="/dashboard/clients" className="block px-4 py-2 rounded-md hover:bg-gray-200">
                         Clientes
                     </Link>
+                    <Link href="/dashboard/pets" className="block px-4 py-2 rounded-md hover:bg-gray-200">
+                        Mascotas
+                    </Link>
                     {/* Aquí añadiremos más enlaces después (Mascotas, Citas, etc.) */}
                 </nav>
             </aside>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Ruta: lib/org.ts
 
 import 'server-only'
@@ -15,7 +16,8 @@ export async function get_active_org(): Promise<{
     orgs: Org[]
     activeOrg: Org | null
 }> {
-    const cookieStore = await cookies()
+    const cookieStore = await cookies() // No es necesario 'await' aquí
+    // No es necesario 'await' aquí
     const supabase = createClient()
 
     const {
@@ -26,11 +28,9 @@ export async function get_active_org(): Promise<{
         return { orgs: [], activeOrg: null }
     }
 
-    // --- CAMBIO CLAVE AQUÍ ---
-    // Cambiamos 'user_tenants' y 'tenants' por las nuevas tablas.
     const { data, error } = await supabase
         .from('user_organizations')
-        .select('organizations ( id, name )') // <-- Apuntamos a la tabla 'organizations'
+        .select('organizations ( id, name )')
         .eq('user_id', user.id)
 
     if (error) {
@@ -38,7 +38,7 @@ export async function get_active_org(): Promise<{
         return { orgs: [], activeOrg: null }
     }
 
-    // El resto de la lógica ya es compatible con la nueva estructura
+    // El ?. y el filter(Boolean) se aseguran de que no haya nulos
     const formattedOrgs = data.map((item) => item.organizations).filter(Boolean) as Org[]
 
     let activeOrg: Org | null = null
@@ -48,9 +48,19 @@ export async function get_active_org(): Promise<{
         activeOrg = formattedOrgs.find((org) => org.id === active_org_id) ?? null
     }
 
+    // --- ESTA ES LA LÓGICA MEJORADA ---
+    // Si después de todo, no hay una organización activa PERO el usuario sí tiene organizaciones,
+    // seleccionamos la primera como activa y guardamos la cookie para futuras visitas.
     if (!activeOrg && formattedOrgs.length > 0) {
         activeOrg = formattedOrgs[0]
-        cookieStore.set(ACTIVE_ORG_COOKIE, activeOrg.id, { path: '/' })
+        // Usamos try...catch por si el 'set' se ejecuta en un entorno donde no puede modificar cookies (como durante un render estático)
+        try {
+            cookieStore.set(ACTIVE_ORG_COOKIE, activeOrg.id, { path: '/' })
+        } catch (e) {
+            // En un Server Component que se renderiza estáticamente, esto podría fallar.
+            // No es un error crítico, la UI simplemente no tendrá una org pre-seleccionada.
+            console.log('Could not set active org cookie in a statically rendered component.')
+        }
     }
 
     return { orgs: formattedOrgs, activeOrg }
