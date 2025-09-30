@@ -1,10 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // This magic configuration sometimes solves 'fetch failed' issues
-  // by forcing Next.js to use a more stable fetch implementation.
-  experimental: {
-    serverExternalPackages: ['@supabase/ssr'],
-  },
+  // Dejar este objeto vacío es lo correcto.
+  // La configuración experimental que tenías ya no es necesaria
+  // para que Supabase funcione con las versiones modernas de Next.js.
 };
 
 export default nextConfig;

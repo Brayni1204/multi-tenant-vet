@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { get_active_org } from '@/lib/org'
-import { redirect } from 'next/navigation'
+
 import PetsAndOwners from './components/PetsAndOwners' // Crearemos este componente a continuación
 
 export default async function PetsPage() {
