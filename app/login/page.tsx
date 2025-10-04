@@ -1,12 +1,10 @@
-// app/login/page.tsx
+// Ruta: app/login/page.tsx
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
-    const router = useRouter()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string | null>(null)
@@ -26,12 +24,11 @@ export default function LoginPage() {
 
         if (error) {
             setError(error.message)
+            setLoading(false)
         } else {
-            // El inicio de sesión fue exitoso, redirigimos al dashboard
-            router.push('/dashboard')
-            router.refresh() // Refresca la página para asegurar que la sesión se actualiza
+            // Esto fuerza una recarga completa y soluciona el 404
+            window.location.href = '/dashboard'
         }
-        setLoading(false)
     }
 
     return (

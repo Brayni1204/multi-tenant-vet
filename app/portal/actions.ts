@@ -10,8 +10,11 @@ export async function portalLogout() {
     await supabase.auth.signOut()
 
     // Obtenemos el host para redirigir al login del subdominio correcto
-    const headersList = await headers()
-    const host = headersList.get('host')
+    const headersList = headers()
+    const host = (await headersList).get('host')
 
-    return redirect(`http://${host}/login`)
+    // Usamos el protocolo https para producción, pero en local http funcionará
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+
+    return redirect(`${protocol}://${host}/login`)
 }
