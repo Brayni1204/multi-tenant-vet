@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { headers } from "next/headers";
-import { PawPrint } from "lucide-react";
+//import { headers } from "next/headers";
+import { PawPrint, LogOut } from "lucide-react";
+import { redirect } from "next/navigation";
 
 export default async function PortalLayout({
     children,
@@ -14,12 +15,38 @@ export default async function PortalLayout({
 }) {
     const supabase = createClient();
 
-    // Obtenemos el nombre de la organización para mostrarlo en el layout
-    const { data: organization } = await supabase
+    // 1. Verificamos si hay un usuario logueado
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        // Si no hay usuario, lo mandamos a la página de login de este portal
+        return redirect(`/login`);
+    }
+
+    // 2. Obtenemos la organización basada en el subdominio
+    const { data: organization, error: orgError } = await supabase
         .from('organizations')
-        .select('name')
+        .select('id, name')
         .eq('subdomain', params.subdomain)
         .single();
+
+    if (orgError || !organization) {
+        return <div><h1>Portal no encontrado</h1></div>;
+    }
+
+    // 3. Verificamos que el usuario logueado es un cliente de ESTA organización
+    const { data: client, error: clientError } = await supabase
+        .from('clients')
+        .select('id, org_id')
+        .eq('user_id', user.id)
+        .single();
+
+    // Si el usuario no es un cliente o no pertenece a esta organización, lo sacamos.
+    if (clientError || !client || client.org_id !== organization.id) {
+        // Podríamos redirigir a una página de "acceso denegado"
+        // pero por ahora lo mandamos al login.
+        return redirect(`/login`);
+    }
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -31,10 +58,16 @@ export default async function PortalLayout({
                             {organization?.name ?? 'Portal del Cliente'}
                         </span>
                     </Link>
-                    <nav className="flex items-center gap-4">
+                    <nav className="flex items-center gap-6">
                         <Link href="/" className="text-gray-600 hover:text-blue-600">Inicio</Link>
                         <Link href="/citas" className="text-gray-600 hover:text-blue-600">Mis Citas</Link>
-                        {/* Aquí añadiremos "Mis Mascotas" después */}
+                        {/* Botón para cerrar sesión */}
+                        <form action="/auth/logout" method="post">
+                            <button type="submit" className="flex items-center text-sm text-red-500 hover:text-red-700">
+                                <LogOut className="h-4 w-4 mr-1" />
+                                Salir
+                            </button>
+                        </form>
                     </nav>
                 </div>
             </header>

@@ -1,12 +1,16 @@
 // Ruta: app/portal/[subdomain]/page.tsx
 
 import { createClient } from "@/lib/supabase/server";
-//import { headers } from "next/headers";
-import Link from "next/link"; // Importamos Link
+import { headers } from "next/headers";
+import Link from "next/link";
 
-export default async function PortalHomePage({ params }: { params: { subdomain: string } }) {
+export default async function PortalHomePage() {
     const supabase = createClient();
-    const { subdomain } = params;
+
+    // Obtenemos el subdominio desde las cabeceras, que es el método más seguro
+    const headersList = await headers();
+    const host = headersList.get('host')!;
+    const subdomain = host.split('.')[0];
 
     const { data: organization, error } = await supabase
         .from('organizations')
@@ -30,7 +34,6 @@ export default async function PortalHomePage({ params }: { params: { subdomain: 
                 <p className="mt-4 text-gray-600">
                     Aquí podrás gestionar tus citas y ver el historial de tus mascotas.
                 </p>
-                {/* AÑADIMOS EL ENLACE AQUÍ */}
                 <Link href="/citas">
                     <button className="mt-6 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors">
                         Ver Mis Citas
