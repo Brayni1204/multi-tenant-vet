@@ -16,17 +16,23 @@ export default async function DashboardLayout({
 
     const { data: { user } } = await supabase.auth.getUser();
 
+    // 1. Si no hay usuario, fuera.
     if (!user) {
         return redirect('/login');
     }
 
-    // ¡VERIFICACIÓN DE ROL!
-    // Comprobamos si el usuario es un administrador/empleado.
-    const { data: userOrg } = await supabase.from('user_organizations').select('org_id').eq('user_id', user.id).limit(1).single();
+    // 2. ¡VERIFICACIÓN DE ROL!
+    //    Comprobamos si el usuario es un administrador/empleado.
+    const { data: userOrg } = await supabase
+        .from('user_organizations')
+        .select('org_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single();
 
     // Si no tiene una organización asignada, significa que es un cliente. ¡Lo sacamos!
     if (!userOrg) {
-        await supabase.auth.signOut(); // Cerramos su sesión
+        await supabase.auth.signOut(); // Cerramos su sesión de forma segura
         return redirect('/login');   // Y lo mandamos al login
     }
 
@@ -35,9 +41,7 @@ export default async function DashboardLayout({
     return (
         <div className="flex h-screen bg-gray-100">
             <aside className="w-64 bg-white border-r">
-                <div className="p-4 border-b">
-                    <h2 className="text-lg font-bold">Menú</h2>
-                </div>
+                <div className="p-4 border-b"><h2 className="text-lg font-bold">Menú</h2></div>
                 <nav className="p-4 space-y-2">
                     <Link href="/dashboard" className="block px-4 py-2 rounded-md hover:bg-gray-200">Inicio</Link>
                     <Link href="/dashboard/clients" className="block px-4 py-2 rounded-md hover:bg-gray-200">Clientes</Link>
@@ -51,7 +55,7 @@ export default async function DashboardLayout({
                         <OrgSwitcher orgs={orgs} activeOrg={activeOrg} />
                     </div>
                     <form action={logout}>
-                        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
+                        <button type="submit" className="px-4 py-2 text-sm text-white bg-red-600 rounded-md hover:bg-red-700">
                             Cerrar Sesión
                         </button>
                     </form>
