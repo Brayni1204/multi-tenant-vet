@@ -4,7 +4,7 @@
 
 import { type Org } from '@/lib/org'
 // ¡AQUÍ ESTÁ EL CAMBIO! Importamos la acción desde su nuevo archivo.
-import { set_active_org } from '@/app/dashboard/actions'
+import { set_active_org } from '@/app/[subdomain]/dashboard/actions'
 
 export default function OrgSwitcher({
     orgs,

@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const { company_name, user_email, user_password, user_full_name } = await req.json()
+        const { company_name, user_email, user_password, user_full_name, subdomain } = await req.json()
 
-        if (!company_name || !user_email || !user_password || !user_full_name) {
+        if (!company_name || !user_email || !user_password || !user_full_name || !subdomain) {
             return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 })
         }
 
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         // 2. Crear la organización
         const { data: orgData, error: orgError } = await supabaseAdmin
             .from('organizations')
-            .insert({ name: company_name, created_by: user.id })
+            .insert({ name: company_name, created_by: user.id, subdomain: subdomain })
             .select()
             .single()
 
