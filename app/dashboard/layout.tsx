@@ -16,26 +16,25 @@ export default async function DashboardLayout({
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    // 1. Si no hay usuario, fuera.
+    // 1. Si no hay usuario, se va al login.
     if (!user) {
         return redirect('/login');
     }
 
     // 2. ¡VERIFICACIÓN DE ROL!
-    //    Comprobamos si el usuario es un administrador/empleado.
+    //    Comprobamos si el usuario es un administrador/empleado en la tabla 'user_organizations'.
     const { data: userOrg } = await supabase
         .from('user_organizations')
         .select('org_id')
-        .eq('user_id', user.id)
-        .limit(1)
-        .single();
+        .eq('user_id', user.id);
 
-    // Si no tiene una organización asignada, significa que es un cliente. ¡Lo sacamos!
-    if (!userOrg) {
+    // Si el conteo es 0, no pertenece a ninguna organización. ¡Es un cliente intentando entrar!
+    if (!userOrg || userOrg.length === 0) {
         await supabase.auth.signOut(); // Cerramos su sesión de forma segura
-        return redirect('/login');   // Y lo mandamos al login
+        return redirect('/login?error=access_denied');   // Y lo mandamos al login con un mensaje (opcional)
     }
 
+    // Si pasó la verificación, cargamos sus datos de organización.
     const { orgs, activeOrg } = await get_active_org();
 
     return (

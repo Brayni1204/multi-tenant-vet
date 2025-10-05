@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/middleware'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-    // Tarea 1: Refrescar la sesión del usuario.
+    // Tarea 1: Refrescar la sesión del usuario. Esto es todo lo que hace con Supabase.
     const { supabase, response } = createClient(request)
     await supabase.auth.getSession()
 
@@ -26,6 +26,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
+        /*
+         * Ejecuta el middleware en TODAS las rutas excepto las de sistema y API.
+         * Esto es más simple y efectivo.
+         */
         '/((?!_next/static|_next/image|favicon.ico|api|login|signup).*)',
     ],
 }
