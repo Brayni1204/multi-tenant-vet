@@ -2,19 +2,20 @@
 
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { headers } from "next/headers";
 import { PawPrint, LogOut } from "lucide-react";
 import { redirect } from "next/navigation";
-import { portalLogout } from "../actions"; // Crearemos esto en el siguiente paso
+import { portalLogout } from "./actions"; // Crearemos esto en el siguiente paso
 
 export default async function PortalLayout({
     children,
+    params,
 }: {
     children: React.ReactNode;
+    params: { subdomain: string };
 }) {
     const supabase = createClient();
-    const headersList = headers();
-    const subdomain = (await headersList).get('x-subdomain')!;
+    const { subdomain } = params;
+
 
     // 1. Verificamos si hay un usuario logueado
     const { data: { user } } = await supabase.auth.getUser();
