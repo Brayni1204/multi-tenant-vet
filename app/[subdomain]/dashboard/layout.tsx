@@ -1,6 +1,5 @@
 // Ruta: app/dashboard/layout.tsx
 
-import OrgSwitcher from '@/components/OrgSwitcher';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { logout } from '@/app/auth/actions';
