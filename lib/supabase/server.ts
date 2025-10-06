@@ -5,9 +5,9 @@ import { cookies } from 'next/headers'
 import { Database } from '../database.types'
 
 // LA FUNCIÓN NO ES ASYNC
-export function createClient() {
+export async function createClient() {
     // LA LLAMADA A cookies() NO LLEVA AWAIT
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
 
     return createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,

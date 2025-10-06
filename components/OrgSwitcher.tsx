@@ -1,10 +1,9 @@
 // Ruta: components/OrgSwitcher.tsx
-
 'use client'
 
 import { type Org } from '@/lib/org'
-// ¡AQUÍ ESTÁ EL CAMBIO! Importamos la acción desde su nuevo archivo.
-import { set_active_org } from '@/app/[subdomain]/dashboard/actions'
+// ¡CORRECCIÓN! Importamos la acción desde el nuevo archivo central.
+import { set_active_org } from '@/app/actions'
 
 export default function OrgSwitcher({
     orgs,
@@ -15,7 +14,6 @@ export default function OrgSwitcher({
 }) {
     const handleOrgChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const org_id = e.target.value
-        // Llamamos a la Server Action. Ahora sí funciona.
         set_active_org(org_id)
     }
 
