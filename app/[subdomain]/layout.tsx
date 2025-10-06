@@ -12,7 +12,7 @@ export default async function PortalLayout({
     children: React.ReactNode;
     params: { subdomain: string };
 }) {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { subdomain } = params;
 
     // Obtenemos el usuario, pero no hacemos nada si no existe
