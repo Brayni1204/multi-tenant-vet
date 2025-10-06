@@ -25,12 +25,11 @@ export async function POST(req: NextRequest) {
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
 
-        // --- INICIO DEL CAMBIO ---
-        // 1. Crear el usuario con la API de Admin (Método oficial y seguro)
+        // 1. Crear el usuario (el trigger 'handle_new_user' creará su perfil automáticamente)
         const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
             email: user_email,
             password: user_password,
-            email_confirm: true, // Lo marcamos como confirmado
+            email_confirm: true,
             user_metadata: {
                 full_name: user_full_name,
             },
@@ -50,23 +49,20 @@ export async function POST(req: NextRequest) {
             .single()
 
         if (orgError) {
-            // Si esto falla, eliminamos el usuario que acabamos de crear para no dejar datos basura
             await supabaseAdmin.auth.admin.deleteUser(user.id);
             return NextResponse.json({ error: `Error al crear la empresa: ${orgError.message}` }, { status: 500 });
         }
 
-        // 3. Vincular el usuario a la organización
+        // 3. Vincular el usuario a la organización CON EL ROL DE ADMIN
         const { error: linkError } = await supabaseAdmin
             .from('user_organizations')
             .insert({ user_id: user.id, org_id: orgData.id, role: 'admin' })
 
         if (linkError) {
-            // Si esto falla, eliminamos el usuario y la empresa
             await supabaseAdmin.auth.admin.deleteUser(user.id);
             await supabaseAdmin.from('organizations').delete().eq('id', orgData.id);
             return NextResponse.json({ error: `Error al vincular usuario y empresa: ${linkError.message}` }, { status: 500 });
         }
-        // --- FIN DEL CAMBIO ---
 
         return NextResponse.json({ message: 'Empresa y admin creados con éxito', org_id: orgData.id }, { status: 201 })
 

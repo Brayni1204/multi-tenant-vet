@@ -1,9 +1,7 @@
-// Ruta: app/dashboard/pets/page.tsx
-
+// Ruta: app/(dashboard)/[subdomain]/dashboard/pets/page.tsx
 import { createClient } from '@/lib/supabase/server'
 import { get_active_org } from '@/lib/org'
-
-import PetsAndOwners from '../pets/components/PetsAndOwners' // Crearemos este componente a continuación
+import PetsAndOwners from './components/PetsAndOwners'
 
 export default async function PetsPage() {
     const supabase = await createClient()
@@ -12,26 +10,29 @@ export default async function PetsPage() {
     if (!activeOrg) {
         return (
             <div className="p-4 border rounded-xl bg-yellow-50">
-                Selecciona o crea una clínica para gestionar mascotas.
+                Selecciona o crea una clínica para gestionar.
             </div>
         )
     }
 
-    // Obtenemos las mascotas y clientes (dueños) que pertenecen a la organización activa
-    // RLS (Row Level Security) se encargará de filtrar los datos automáticamente
+    // Obtenemos las mascotas y su perfil de dueño asociado
     const { data: pets, error: petsError } = await supabase
         .from('pets')
-        .select('*, clients (*)') // Obtenemos la mascota y su cliente asociado
+        .select('*, owner:profiles (*)') // Obtenemos la mascota y su perfil de dueño
+        .eq('org_id', activeOrg.id)
         .order('name', { ascending: true })
 
-    const { data: clients, error: clientsError } = await supabase
-        .from('clients')
-        .select('*')
-        .order('name', { ascending: true })
+    // Obtenemos todos los perfiles que son 'clients' en esta organización
+    const { data: ownersData, error: ownersError } = await supabase
+        .from('user_organizations')
+        .select('profile:profiles (*)')
+        .eq('org_id', activeOrg.id)
+        .eq('role', 'client');
 
-    if (petsError || clientsError) {
-        console.error('Error fetching data:', petsError || clientsError)
-        // Aquí podrías mostrar un mensaje de error
+    const owners = ownersData ? ownersData.map(item => item.profile).filter(Boolean) : [];
+
+    if (petsError || ownersError) {
+        console.error('Error fetching data:', petsError || ownersError)
     }
 
     return (
@@ -42,7 +43,7 @@ export default async function PetsPage() {
             {/* Pasamos los datos al componente del lado del cliente */}
             <PetsAndOwners
                 initialPets={pets || []}
-                initialClients={clients || []}
+                initialClients={owners || []}
                 activeOrgId={activeOrg.id}
             />
         </div>

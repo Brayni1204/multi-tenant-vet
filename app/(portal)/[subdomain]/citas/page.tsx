@@ -1,5 +1,4 @@
-// Ruta: app/portal/[subdomain]/citas/page.tsx
-
+// Ruta: app/(portal)/[subdomain]/citas/page.tsx
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,27 +8,13 @@ import { redirect } from "next/navigation";
 export default async function MisCitasPage() {
     const supabase = await createClient();
 
-    // Obtenemos el usuario actual
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Aunque el layout ya protege la ruta, es buena práctica verificar de nuevo.
     if (!user) {
         return redirect('/login');
     }
 
-    // Buscamos el perfil de cliente del usuario para obtener su client_id
-    const { data: client } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-    if (!client) {
-        return <p>No se encontró tu perfil de cliente.</p>;
-    }
-
-    // ¡La consulta clave! Buscamos las citas de este cliente.
-    // Usamos select() para obtener datos de las tablas relacionadas.
+    // Ahora buscamos citas donde el 'owner_id' sea el del usuario actual
     const { data: appointments, error } = await supabase
         .from('appointments')
         .select(`
@@ -40,8 +25,8 @@ export default async function MisCitasPage() {
             pets ( name, species ),
             veterinarians ( full_name )
         `)
-        .eq('client_id', client.id) // Filtramos por el ID del cliente
-        .order('starts_at', { ascending: false }); // Mostramos las más recientes primero
+        .eq('owner_id', user.id) // Cambiado de 'client_id' a 'owner_id'
+        .order('starts_at', { ascending: false });
 
     if (error) {
         console.error("Error fetching appointments: ", error);
