@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // Ruta: lib/supabase/server.ts
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
@@ -6,32 +5,30 @@ import { cookies } from 'next/headers'
 import { Database } from '../database.types'
 
 export async function createClient() {
-    const cookieStore = await cookies()
+    const cookieStore = await cookies() // Obtenemos la instancia de cookies aquí
+    // Obtenemos la instancia de cookies aquí
 
     return createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
-                // CAMBIO: Eliminamos 'async' y 'await'
-                get(name: string) {
+                // AHORA SÍ, USAMOS ASYNC/AWAIT
+                async get(name: string) {
                     return cookieStore.get(name)?.value
                 },
-                // CAMBIO: Eliminamos 'async' y 'await'
-                set(name: string, value: string, options: CookieOptions) {
+                async set(name: string, value: string, options: CookieOptions) {
                     try {
                         cookieStore.set({ name, value, ...options })
                     } catch (error) {
-                        // Ignorar errores en Server Components es seguro
-                        // si el middleware refresca la sesión.
+                        // Es seguro ignorar este error en Server Components
                     }
                 },
-                // CAMBIO: Eliminamos 'async' y 'await'
-                remove(name: string, options: CookieOptions) {
+                async remove(name: string, options: CookieOptions) {
                     try {
                         cookieStore.set({ name, value: '', ...options })
                     } catch (error) {
-                        // Lo mismo que para 'set'.
+                        // Lo mismo que 'set'
                     }
                 },
             },
