@@ -1,34 +1,37 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Ruta: lib/supabase/server.ts
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { Database } from '../database.types'
 
-export function createClient() {
-    const cookieStore = cookies()
+export async function createClient() {
+    const cookieStore = await cookies()
 
     return createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
-                async get(name: string) {
-                    return (await cookieStore).get(name)?.value
+                // CAMBIO: Eliminamos 'async' y 'await'
+                get(name: string) {
+                    return cookieStore.get(name)?.value
                 },
-                async set(name: string, value: string, options: CookieOptions) {
+                // CAMBIO: Eliminamos 'async' y 'await'
+                set(name: string, value: string, options: CookieOptions) {
                     try {
-                        (await cookieStore).set({ name, value, ...options })
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        cookieStore.set({ name, value, ...options })
                     } catch (error) {
-                        // Ignorar
+                        // Ignorar errores en Server Components es seguro
+                        // si el middleware refresca la sesión.
                     }
                 },
-                async remove(name: string, options: CookieOptions) {
+                // CAMBIO: Eliminamos 'async' y 'await'
+                remove(name: string, options: CookieOptions) {
                     try {
-                        (await cookieStore).set({ name, value: '', ...options })
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        cookieStore.set({ name, value: '', ...options })
                     } catch (error) {
-                        // Ignorar
+                        // Lo mismo que para 'set'.
                     }
                 },
             },

@@ -6,7 +6,7 @@ import { get_active_org } from '@/lib/org'
 import PetsAndOwners from '../pets/components/PetsAndOwners' // Crearemos este componente a continuación
 
 export default async function PetsPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { activeOrg } = await get_active_org()
 
     if (!activeOrg) {

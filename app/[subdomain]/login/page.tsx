@@ -30,13 +30,40 @@ export default function LoginPage() {
             window.location.href = '/dashboard'
         }
     }
+    const handleGoogleLogin = async () => {
+        await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                // Redirige al usuario de vuelta a la página principal del portal
+                // después de iniciar sesión con Google.
+                redirectTo: `${window.location.origin}/`
+            }
+        });
+    };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
-            <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-                    Iniciar Sesión
-                </h2>
+        <div className="flex items-center justify-center min-h-screen bg-gray-50">
+            <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
+                <h1 className="text-2xl font-bold text-center">Acceso para Clientes</h1>
+
+                {/* --- AÑADIMOS EL BOTÓN DE GOOGLE --- */}
+                <button
+                    onClick={handleGoogleLogin}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 font-bold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                    {/* Puedes añadir un SVG del logo de Google aquí */}
+                    <svg className="w-5 h-5" viewBox="0 0 48 48">...</svg>
+                    Ingresar con Google
+                </button>
+
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white text-gray-500">O continúa con tu email</span>
+                    </div>
+                </div>
                 <form onSubmit={handleLogin}>
                     <div className="space-y-4">
                         <input

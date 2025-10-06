@@ -6,7 +6,7 @@ import ClientForm from '@/components/ClientForm'
 import { redirect } from 'next/navigation'
 
 export default async function ClientsPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { activeOrg } = await get_active_org()
 
     if (!activeOrg) {

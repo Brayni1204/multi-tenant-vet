@@ -13,7 +13,7 @@ export default async function PortalLayout({
     children: React.ReactNode;
     params: { subdomain: string };
 }) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { subdomain } = params;
 
 

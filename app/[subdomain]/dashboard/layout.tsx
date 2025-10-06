@@ -1,78 +1,76 @@
-// Ruta: app/dashboard/layout.tsx
+// Ruta: app/[subdomain]/layout.tsx
 
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
-import { logout } from '@/app/auth/actions';
-import Link from 'next/link';
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { PawPrint, LogOut } from "lucide-react";
+//import { redirect } from "next/navigation";
+import { portalLogout } from "../actions";
 
-export default async function DashboardLayout({
+export default async function PortalLayout({
     children,
     params,
 }: {
     children: React.ReactNode;
     params: { subdomain: string };
 }) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { subdomain } = params;
 
+    // Obtenemos el usuario, PERO AHORA ES OPCIONAL.
     const { data: { user } } = await supabase.auth.getUser();
 
-    // 1. Si no hay usuario, se va al login.
-    if (!user) {
-        return redirect(`/${subdomain}/login`);
-    }
-
-    // 2. ¡VERIFICACIÓN DE ROL!
-    //    Comprobamos si el usuario es un administrador/empleado en la tabla 'user_organizations'.
-    const { data: activeOrg, error: orgError } = await supabase
+    // Obtenemos la organización basada en el subdominio (esto es público)
+    const { data: organization, error: orgError } = await supabase
         .from('organizations')
         .select('id, name')
         .eq('subdomain', subdomain)
         .single();
 
-    if (orgError || !activeOrg) {
-        return redirect('/?error=org_not_found'); // O una página de error 404
+    if (orgError || !organization) {
+        return <div><h1>Portal no encontrado</h1></div>;
     }
 
-    // Verificamos si el usuario pertenece a ESTA organización
-    const { data: userOrg } = await supabase
-        .from('user_organizations')
-        .select('org_id')
-        .eq('user_id', user.id)
-        .eq('org_id', activeOrg.id)
-        .maybeSingle();
-
-    if (!userOrg) {
-        await supabase.auth.signOut();
-        return redirect(`/${subdomain}/login?error=access_denied`);
-    }
+    // ELIMINAMOS EL BLOQUE QUE VERIFICABA AL USUARIO Y REDIRIGÍA
+    // La verificación se hará ahora en cada página que lo necesite (ej. /citas)
 
     return (
-        <div className="flex h-screen bg-gray-100">
-            <aside className="w-64 bg-white border-r">
-                <div className="p-4 border-b"><h2 className="text-lg font-bold">Menú</h2></div>
-                <nav className="p-4 space-y-2">
-                    {/* CORRECCIÓN DE RUTAS: Usamos rutas relativas */}
-                    <Link href="/dashboard" className="block px-4 py-2 rounded-md hover:bg-gray-200">Inicio</Link>
-                    <Link href="/dashboard/clients" className="block px-4 py-2 rounded-md hover:bg-gray-200">Clientes</Link>
-                    <Link href="/dashboard/pets" className="block px-4 py-2 rounded-md hover:bg-gray-200">Mascotas</Link>
-                    <Link href="/dashboard/users" className="block px-4 py-2 rounded-md hover:bg-gray-200">Usuarios</Link>
-                </nav>
-            </aside>
-            <div className="flex-1 flex flex-col">
-                <header className="border-b p-4 flex justify-between items-center bg-white shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-xl font-bold text-gray-800">{activeOrg.name}</h1>
-                        {/* El OrgSwitcher ya no es necesario aquí, la URL manda. Lo quitamos. */}
-                    </div>
-                    <form action={logout}>
-                        <button type="submit" className="px-4 py-2 text-sm text-white bg-red-600 rounded-md hover:bg-red-700">
-                            Cerrar Sesión
-                        </button>
-                    </form>
-                </header>
-                <main className="flex-1 p-4 sm:p-6 overflow-y-auto">{children}</main>
-            </div>
+        <div className="flex flex-col min-h-screen">
+            <header className="bg-white shadow-md z-10">
+                <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+                    <Link href="/" className="flex items-center gap-2">
+                        <PawPrint className="h-8 w-8 text-blue-600" />
+                        <span className="text-xl font-bold text-gray-800">
+                            {organization.name}
+                        </span>
+                    </Link>
+                    <nav className="flex items-center gap-6">
+                        <Link href="/" className="text-gray-600 hover:text-blue-600">Inicio</Link>
+                        <Link href="/citas" className="text-gray-600 hover:text-blue-600">Mis Citas</Link>
+
+                        {/* Mostramos el botón de Salir solo si el usuario está logueado */}
+                        {user && (
+                            <form action={portalLogout}>
+                                <button type="submit" className="flex items-center text-sm text-red-500 hover:text-red-700">
+                                    <LogOut className="h-4 w-4 mr-1" />
+                                    Salir
+                                </button>
+                            </form>
+                        )}
+                        {/* Mostramos el botón de Ingresar si NO está logueado */}
+                        {!user && (
+                            <Link href="/login" className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                Ingresar
+                            </Link>
+                        )}
+                    </nav>
+                </div>
+            </header>
+            <main className="flex-1 bg-gray-50">
+                <div className="container mx-auto p-4 sm:p-6">
+                    {children}
+                </div>
+            </main>
+            {/* ... (el footer se queda igual) ... */}
         </div>
     );
 }

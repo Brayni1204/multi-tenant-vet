@@ -7,7 +7,7 @@ import { Calendar, Clock, PawPrint } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function MisCitasPage() {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Obtenemos el usuario actual
     const { data: { user } } = await supabase.auth.getUser();

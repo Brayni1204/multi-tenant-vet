@@ -6,7 +6,7 @@ import UsersList from './UsersList'
 import AddUserForm from './AddUserForm'
 
 export default async function UsersPage() {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const {
         data: { user },
