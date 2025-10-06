@@ -18,7 +18,7 @@ export async function get_active_org(): Promise<{
 }> {
     const cookieStore = await cookies() // No es necesario 'await' aquí
     // No es necesario 'await' aquí
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const {
         data: { user },

@@ -4,17 +4,14 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { Database } from '../database.types'
 
-// LA FUNCIÓN NO ES ASYNC
-export function createClient() {
-    // LA LLAMADA A cookies() NO LLEVA AWAIT
-    const cookieStore = cookies()
+export async function createClient() {
+    const cookieStore = await cookies()
 
     return createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
-                // ESTOS MÉTODOS INTERNOS SÍ DEBEN SER ASYNC
                 async get(name: string) {
                     return cookieStore.get(name)?.value
                 },

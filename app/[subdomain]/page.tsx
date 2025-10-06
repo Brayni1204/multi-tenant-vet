@@ -1,13 +1,12 @@
-// Ruta: app/portal/[subdomain]/page.tsx
+// Ruta: app/[subdomain]/page.tsx
 
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export default async function PortalHomePage({ params }: { params: { subdomain: string } }) {
-    const supabase = createClient();
-    const { subdomain } = params;
+    const supabase = await createClient();
+    const { subdomain } = await params; // CORRECTED: Added await for params
 
-    // ... (el resto del código se queda igual)
     const { data: organization, error } = await supabase
         .from('organizations')
         .select('name')
