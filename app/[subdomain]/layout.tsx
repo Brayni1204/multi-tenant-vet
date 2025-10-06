@@ -12,8 +12,8 @@ export default async function PortalLayout({
     children: React.ReactNode;
     params: { subdomain: string };
 }) {
-    const supabase = await createClient();
-    const { subdomain } = await params; // CORRECTED: Added await for params
+    const supabase = createClient();
+    const { subdomain } = params;
 
     // Obtenemos el usuario, pero no hacemos nada si no existe
     const { data: { user } } = await supabase.auth.getUser();

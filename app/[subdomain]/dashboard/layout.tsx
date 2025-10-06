@@ -14,7 +14,7 @@ export default async function PortalLayout({
     params: { subdomain: string };
 }) {
     const supabase = await createClient();
-    const { subdomain } = await params;
+    const { subdomain } = params;
 
     // Obtenemos el usuario, PERO AHORA ES OPCIONAL.
     const { data: { user } } = await supabase.auth.getUser();
