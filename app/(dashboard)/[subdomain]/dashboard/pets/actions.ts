@@ -39,8 +39,8 @@ export async function createClientWithLogin(formData: FormData) {
 
     // 2. Creamos el registro del cliente en nuestra tabla 'clients' y lo vinculamos
     const { data: client, error: clientError } = await supabaseAdmin
-        .from('clients')
-        .insert({ ...clientData, user_id: authData.user.id })
+        .from('profiles')
+        .insert({ ...clientData, id: authData.user.id })
         .select()
         .single()
 

@@ -15,21 +15,19 @@ export default async function PetsPage() {
         )
     }
 
-    // Obtenemos las mascotas y su perfil de dueño asociado
     const { data: pets, error: petsError } = await supabase
         .from('pets')
-        .select('*, owner:profiles (*)') // Obtenemos la mascota y su perfil de dueño
+        .select('*, owner:profiles (*)')
         .eq('org_id', activeOrg.id)
         .order('name', { ascending: true })
 
-    // Obtenemos todos los perfiles que son 'clients' en esta organización
+    // --- CORRECCIÓN AQUÍ ---
+    // Obtenemos los perfiles que pertenecen a la organización activa.
     const { data: ownersData, error: ownersError } = await supabase
-        .from('user_organizations')
-        .select('profile:profiles (*)')
-        .eq('org_id', activeOrg.id)
-        .eq('role', 'client');
-
-    const owners = ownersData ? ownersData.map(item => item.profile).filter(Boolean) : [];
+        .from('profiles')
+        .select('*, user_organizations!inner(org_id, role)')
+        .eq('user_organizations.org_id', activeOrg.id)
+        .eq('user_organizations.role', 'client')
 
     if (petsError || ownersError) {
         console.error('Error fetching data:', petsError || ownersError)
@@ -40,10 +38,9 @@ export default async function PetsPage() {
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">Mascotas y Dueños</h1>
             </div>
-            {/* Pasamos los datos al componente del lado del cliente */}
             <PetsAndOwners
                 initialPets={pets || []}
-                initialOwners={owners || []} // <-- CORREGIDO
+                initialOwners={ownersData || []} // Pasamos los perfiles de dueños
                 activeOrgId={activeOrg.id}
             />
         </div>

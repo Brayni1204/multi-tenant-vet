@@ -1,8 +1,9 @@
-// Ruta: app/dashboard/clients/page.tsx
+// Ruta: app/(dashboard)/[subdomain]/dashboard/clients/page.tsx
 
 import { createClient } from '@/lib/supabase/server'
 import { get_active_org } from '@/lib/org'
-import ClientForm from '@/components/ClientForm'
+// Vamos a deshabilitar el formulario por ahora, lo arreglaremos después.
+// import ClientForm from '@/components/ClientForm' 
 import { redirect } from 'next/navigation'
 
 export default async function ClientsPage() {
@@ -10,29 +11,31 @@ export default async function ClientsPage() {
     const { activeOrg } = await get_active_org()
 
     if (!activeOrg) {
-        // Si no hay empresa activa, no podemos hacer nada.
-        // Esto podría pasar si un usuario no pertenece a ninguna empresa.
         return redirect('/dashboard')
     }
 
-    // La magia de RLS: Pedimos los clientes sin filtrar.
-    // Supabase automáticamente solo nos dará los de la empresa activa.
-    const { data: clients, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('name', { ascending: true })
+    // --- CORRECCIÓN DE LA CONSULTA ---
+    // Buscamos en user_organizations y traemos la información de profiles.
+    const { data: userOrgs, error } = await supabase
+        .from('user_organizations')
+        .select('role, profiles (*)') // Seleccionamos el rol y todos los datos del perfil anidado
+        .eq('org_id', activeOrg.id)
 
     if (error) {
         console.error('Error al cargar clientes:', error)
-        // Podrías mostrar un mensaje de error aquí
     }
+
+    // Filtramos para obtener solo los perfiles de los clientes
+    const clients = userOrgs
+        ?.filter(uo => uo.role === 'client' && uo.profiles)
+        .map(uo => uo.profiles) ?? []
+
 
     return (
         <div className="p-4 sm:p-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">Clientes</h1>
-                {/* El formulario para añadir nuevos clientes */}
-                <ClientForm activeOrgId={activeOrg.id} />
+                {/* <ClientForm activeOrgId={activeOrg.id} />  // Temporalmente deshabilitado */}
             </div>
 
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -48,10 +51,11 @@ export default async function ClientsPage() {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {clients && clients.length > 0 ? (
                                 clients.map((client) => (
-                                    <tr key={client.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap">{client.name} {client.last_name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">{client.phone ?? 'N/A'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">{client.email ?? 'N/A'}</td>
+                                    <tr key={client!.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap">{client!.full_name}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{client!.phone ?? 'N/A'}</td>
+                                        {/* El email está en auth.users, no en profiles, por eso no lo mostramos por ahora */}
+                                        <td className="px-6 py-4 whitespace-nowrap">N/A</td>
                                     </tr>
                                 ))
                             ) : (

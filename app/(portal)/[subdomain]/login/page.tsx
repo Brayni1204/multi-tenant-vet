@@ -1,4 +1,4 @@
-// Ruta: app/login/page.tsx
+// Ruta: app/(portal)/[subdomain]/login/page.tsx
 'use client'
 
 import { useState } from 'react'
@@ -17,19 +17,48 @@ export default function LoginPage() {
         setLoading(true)
         setError(null)
 
-        const { error } = await supabase.auth.signInWithPassword({
+        // 1. Iniciar sesión normalmente
+        const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
             email,
             password,
         })
 
-        if (error) {
-            setError(error.message)
+        if (signInError) {
+            setError(signInError.message)
             setLoading(false)
-        } else {
-            // Esto fuerza una recarga completa y soluciona el 404
-            window.location.href = '/dashboard'
+            return;
+        }
+
+        if (user) {
+            try {
+                // 2. Obtener el subdominio actual
+                const subdomain = window.location.hostname.split('.')[0];
+
+                // 3. Llamar a una Edge Function para verificar la pertenencia (más seguro)
+                const { data, error: validationError } = await supabase.functions.invoke('validate-user-org', {
+                    body: { subdomain }
+                });
+
+                if (validationError || !data?.isMember) {
+                    // 4. Si no es miembro, cerrar sesión y mostrar error
+                    await supabase.auth.signOut();
+                    setError("No tienes acceso a esta clínica. Verifica el subdominio o contacta al administrador.");
+                    setLoading(false);
+                    return;
+                }
+
+                // 5. Si es miembro, redirigir al dashboard
+                window.location.href = '/dashboard';
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (e: any) {
+                await supabase.auth.signOut();
+                setError(e.message || "Ocurrió un error inesperado durante la validación.");
+                setLoading(false);
+            }
         }
     }
+
     const handleGoogleLogin = async () => {
         await supabase.auth.signInWithOAuth({
             provider: 'google',
