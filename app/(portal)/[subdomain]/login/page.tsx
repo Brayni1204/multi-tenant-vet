@@ -42,7 +42,7 @@ export default function LoginPage() {
                 if (validationError || !data?.isMember) {
                     // 4. Si no es miembro, cerrar sesión y mostrar error
                     await supabase.auth.signOut();
-                    setError("No tienes acceso a esta clínica. Verifica el subdominio o contacta al administrador.");
+                    setError("Acceso no autorizado.");
                     setLoading(false);
                     return;
                 }
@@ -112,7 +112,9 @@ export default function LoginPage() {
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
-                    {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
+                    <div className="text-center">
+                        {error && <p className="text-red-500 text-sm mt-4 justify-center">{error}</p>}
+                    </div>
                     <button
                         type="submit"
                         disabled={loading}

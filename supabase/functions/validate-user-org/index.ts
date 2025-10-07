@@ -1,78 +1,83 @@
-// supabase/functions/validate-user-org/index.ts
+// Ruta: supabase/functions/validate-user-org/index.ts
 
-import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// Definimos un tipo para la respuesta para mayor claridad
-type ValidationResponse = {
-    isMember: boolean;
-    error?: string;
+// Encabezados de CORS que reutilizaremos en todas las respuestas
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+console.log('Function cold start: validate-user-org');
+
 Deno.serve(async (req: Request) => {
-    // Manejo de CORS - importante para que el navegador permita la llamada
-    if (req.method === 'OPTIONS') {
-        return new Response('ok', {
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
-            }
-        });
+  console.log('--- New request received ---');
+
+  // Responder a la petición de "pre-vuelo" de CORS
+  if (req.method === 'OPTIONS') {
+    console.log('Responding to OPTIONS preflight request');
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    const { subdomain } = await req.json();
+    console.log(`Payload received. Subdomain: "${subdomain}"`);
+    if (!subdomain) throw new Error("Subdomain is required");
+
+    const authHeader = req.headers.get('Authorization')!;
+    if (!authHeader) throw new Error("Not authenticated");
+    console.log('Authorization header found.');
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    console.log('Supabase client created for the user.');
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not found");
+    console.log(`User identified: ${user.id} (${user.email})`);
+    
+    // 1. Buscar la organización
+    console.log(`Searching for organization with subdomain: "${subdomain}"`);
+    const { data: org, error: orgError } = await supabase
+      .from('organizations')
+      .select('id')
+      .eq('subdomain', subdomain)
+      .single();
+
+    if (orgError || !org) {
+      console.error(`Organization not found for subdomain "${subdomain}". Error:`, orgError);
+      return new Response(JSON.stringify({ isMember: false }), { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
     }
+    console.log(`Organization found: ${org.id}`);
 
-    try {
-        const { subdomain } = await req.json();
-        if (!subdomain) {
-            throw new Error("Subdomain is required");
-        }
+    // 2. Verificar la membresía
+    console.log(`Checking membership for user ${user.id} in org ${org.id}`);
+    const { error: userOrgError, count } = await supabase
+      .from('user_organizations')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('org_id', org.id);
 
-        const authHeader = req.headers.get('Authorization')!;
+    if (userOrgError) console.error('Error querying user_organizations:', userOrgError);
 
-        const supabase: SupabaseClient = createClient(
-            Deno.env.get('SUPABASE_URL')!,
-            Deno.env.get('SUPABASE_ANON_KEY')!,
-            { global: { headers: { Authorization: authHeader } } }
-        );
+    const isMember = count !== null && count > 0;
+    console.log(`Membership check result count: ${count}`);
+    console.log(`Final decision: isMember = ${isMember}`);
 
-        const { data: { user } } = await supabase.auth.getUser();
+    return new Response(JSON.stringify({ isMember }), { 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    });
 
-        if (!user) {
-            return new Response(JSON.stringify({ isMember: false, error: 'Not authenticated' }),
-                { status: 401, headers: { 'Content-Type': 'application/json' } }
-            );
-        }
-
-        // 1. Buscar la organización por subdominio
-        const { data: org, error: orgError } = await supabase
-            .from('organizations')
-            .select('id')
-            .eq('subdomain', subdomain)
-            .single();
-
-        if (orgError || !org) {
-            // Si no se encuentra la organización, el usuario no puede ser miembro
-            return new Response(JSON.stringify({ isMember: false }),
-                { headers: { 'Content-Type': 'application/json' } }
-            );
-        }
-
-        // 2. Verificar si el usuario pertenece a esa organización
-        const { data: userOrg, error: userOrgError } = await supabase
-            .from('user_organizations')
-            .select('user_id', { count: 'exact' }) // Es más eficiente solo contar
-            .eq('user_id', user.id)
-            .eq('org_id', org.id);
-
-        // Si hubo un error en la consulta o el conteo es 0, no es miembro
-        const isMember = !userOrgError && (userOrg?.length ?? 0) > 0;
-
-        const response: ValidationResponse = { isMember };
-        return new Response(JSON.stringify(response),
-            { headers: { 'Content-Type': 'application/json' } }
-        );
-
-    } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }),
-            { status: 400, headers: { 'Content-Type': 'application/json' } }
-        );
-    }
+  } catch (error) {
+    console.error('Caught a critical error:', error.message);
+    return new Response(JSON.stringify({ error: error.message }), { 
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    });
+  }
 });
