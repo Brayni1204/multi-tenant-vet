@@ -43,7 +43,7 @@ export default async function PetsPage() {
             {/* Pasamos los datos al componente del lado del cliente */}
             <PetsAndOwners
                 initialPets={pets || []}
-                initialClients={owners || []}
+                initialOwners={owners || []} // <-- CORREGIDO
                 activeOrgId={activeOrg.id}
             />
         </div>
