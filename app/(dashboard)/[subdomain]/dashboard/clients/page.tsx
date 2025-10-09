@@ -4,7 +4,7 @@ import { get_active_org } from '@/lib/org';
 import { redirect } from 'next/navigation';
 import AddClientByDniForm from '@/components/AddClientByDniForm';
 
-export default async function ClientsPage() {
+export default async function ClientsPage({ userEmail }: { userEmail?: string }) {
     const supabase = await createClient();
     const { activeOrg } = await get_active_org();
 
@@ -12,25 +12,26 @@ export default async function ClientsPage() {
         return redirect('/dashboard');
     }
 
+    // --- ESTA ES LA CONSULTA CORRECTA USANDO LA FUNCIÓN RPC ---
     const { data: clients, error } = await supabase.rpc('get_clients_for_admin', {
         target_org_id: activeOrg.id
     });
-    
+
     if (error) {
         console.error('Error al cargar clientes:', error);
     }
-    
+
     return (
         <div className="p-4 sm:p-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">Clientes</h1>
             </div>
 
-            {/* --- CORRECCIÓN AQUÍ --- */}
-            <AddClientByDniForm orgId={activeOrg.id} />
+            {userEmail !== 'demo@demo.com' && (
+                <AddClientByDniForm orgId={activeOrg.id} />
+            )}
 
             <div className="mt-6 bg-white rounded-lg shadow-md overflow-hidden">
-                {/* ... el resto de tu tabla JSX se mantiene igual ... */}
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">

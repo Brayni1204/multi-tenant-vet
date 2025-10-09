@@ -14,6 +14,7 @@ export default async function DashboardLayout({
     children: React.ReactNode;
     params: { subdomain: string };
 }) {
+
     const supabase = await createClient();
     const { subdomain } = await params;
 

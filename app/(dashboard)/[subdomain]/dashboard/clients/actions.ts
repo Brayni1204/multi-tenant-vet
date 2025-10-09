@@ -2,7 +2,7 @@
 // Ruta: app/(dashboard)/[subdomain]/dashboard/clients/actions.ts
 'use server'
 
-//import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/database.types'
 import { revalidatePath } from 'next/cache'
@@ -16,6 +16,11 @@ type DniApiResponse = {
 }
 
 export async function addClientByDni(formData: FormData) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email === 'demo@demo.com') {
+        return { error: 'El usuario de demostración no puede registrar nuevos clientes.' };
+    }
     const dni = formData.get('dni') as string
     const orgId = formData.get('orgId') as string
 
@@ -33,6 +38,9 @@ export async function addClientByDni(formData: FormData) {
         });
 
         if (!apiResponse.ok) {
+            // --- NUEVO LOG DETALLADO ---
+            const errorBody = await apiResponse.text();
+            console.error(`Error de la API de DNI - Status: ${apiResponse.status}, Body: ${errorBody}`);
             throw new Error('El DNI no fue encontrado o hubo un error en la consulta.');
         }
 

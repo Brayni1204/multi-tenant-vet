@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { type NextRequest, NextResponse } from 'next/server'
 import { Database } from '@/lib/database.types'
 
-const ADMIN_SIGNUP_TOKEN = process.env.ADMIN_SIGNUP_TOKEN
+const ADMIN_SIGNUP_TOKEN = process.env.TECHINNOVATS_KEY
 
 export async function POST(req: NextRequest) {
     const authToken = req.headers.get('Authorization')?.split('Bearer ')[1]
