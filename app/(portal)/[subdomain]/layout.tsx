@@ -2,7 +2,24 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PawPrint, LogOut } from "lucide-react";
+import { Metadata } from 'next';
 import { portalLogout } from "./actions";
+
+export async function generateMetadata({ params }: { params: { subdomain: string } }): Promise<Metadata> {
+    const supabase = await createClient();
+    const { subdomain } = await params;
+
+    // Accedemos a params.subdomain directamente. Next.js App Router lo resuelve.
+    const { data: organization } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .eq('subdomain', subdomain)
+        .single();
+
+    return {
+        title: organization?.name ? `${organization.name} | Portal de Clientes` : 'Portal de Clientes',
+    };
+}
 
 export default async function PortalLayout({
     children,

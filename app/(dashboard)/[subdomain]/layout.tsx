@@ -1,11 +1,23 @@
-// Ruta: app/(dashboard)/[subdomain]/layout.tsx
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { get_active_org } from "@/lib/org";
-import { logout } from "@/app/auth/actions";
-import OrgSwitcher from "@/components/OrgSwitcher";
-import { Users, Dog, Home, LogOut } from "lucide-react";
 import { redirect } from "next/navigation";
+import { Metadata } from 'next';
+import { DashboardSidebar } from "@/components/DashboardSidebar"; // Importa el nuevo componente
+
+export async function generateMetadata({ params }: { params: { subdomain: string } }): Promise<Metadata> {
+    const supabase = await createClient();
+    const { subdomain } = await params;
+
+    const { data: organization } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .eq('subdomain', subdomain)
+        .single();
+
+    return {
+        title: organization?.name ? `${organization.name} | Portal Administrativo` : 'Portal Administrativo',
+    };
+}
 
 export default async function DashboardLayout({
     children,
@@ -28,8 +40,8 @@ export default async function DashboardLayout({
 
     if (!activeOrg) {
         return (
-            <div className="flex h-screen items-center justify-center">
-                <p>No perteneces a ninguna organización o no se ha podido cargar.</p>
+            <div className="flex h-screen items-center justify-center bg-gray-100">
+                <p className="text-gray-600">No perteneces a ninguna organización o no se ha podido cargar.</p>
             </div>
         );
     }
@@ -42,44 +54,14 @@ export default async function DashboardLayout({
         .single();
 
     if (userOrg?.role !== 'admin') {
-        redirect(`/${subdomain}`);
+        redirect(`/`);
     }
 
     return (
-        <div className="min-h-screen w-full flex bg-gray-50">
-            <aside className="w-64 flex-shrink-0 border-r bg-white flex-col hidden sm:flex">
-                <div className="h-16 flex items-center px-4 border-b">
-                    <OrgSwitcher orgs={orgs} activeOrg={activeOrg} />
-                </div>
-                <nav className="flex-1 px-4 py-6 space-y-1">
-                    <Link href="/dashboard" className="flex items-center gap-3 rounded-md px-3 py-2 text-gray-700 transition-all hover:bg-gray-100">
-                        <Home className="h-4 w-4" />
-                        Inicio
-                    </Link>
-                    <Link href="/dashboard/clients" className="flex items-center gap-3 rounded-md px-3 py-2 text-gray-700 transition-all hover:bg-gray-100">
-                        <Users className="h-4 w-4" />
-                        Clientes
-                    </Link>
-                    <Link href="/dashboard/pets" className="flex items-center gap-3 rounded-md px-3 py-2 text-gray-700 transition-all hover:bg-gray-100">
-                        <Dog className="h-4 w-4" />
-                        Mascotas
-                    </Link>
-                    <Link href="/dashboard/users" className="flex items-center gap-3 rounded-md px-3 py-2 text-gray-700 transition-all hover:bg-gray-100">
-                        <Users className="h-4 w-4" />
-                        Usuarios
-                    </Link>
-                </nav>
-                <div className="mt-auto p-4 border-t">
-                    <form action={logout}>
-                        <button className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-50">
-                            <LogOut className="h-4 w-4" />
-                            Cerrar Sesión
-                        </button>
-                    </form>
-                </div>
-            </aside>
+        <div className="min-h-screen w-full flex bg-[#f7f8f9]">
+            <DashboardSidebar subdomain={subdomain} orgs={orgs} activeOrg={activeOrg} />
             <main className="flex-1 flex flex-col">
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-8">
                     {children}
                 </div>
             </main>
