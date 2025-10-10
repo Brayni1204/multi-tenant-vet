@@ -8,6 +8,7 @@ import OrgSwitcher from "@/components/OrgSwitcher";
 import { logout } from "@/app/auth/actions";
 import { Users, Dog, Home, LogOut, PawPrint, Calendar, ClipboardList } from "lucide-react";
 import { Database } from "@/types/supabase";
+//import { set_active_org } from "@/app/actions";
 
 export type Organization = Database['public']['Tables']['organizations']['Row'];
 
@@ -15,13 +16,14 @@ export function DashboardSidebar({ subdomain, orgs, activeOrg }: { subdomain: st
     const pathname = usePathname();
 
     const linkClasses = (path: string) => {
-        // Remove the subdomain from the pathname to make it match the link href
+        // Corrección: Quita el subdominio del pathname antes de compararlo
         const pathnameWithoutSubdomain = pathname.replace(`/${subdomain}`, '');
         const isActive = pathnameWithoutSubdomain === path || (path === '/dashboard' && pathnameWithoutSubdomain === '/');
 
         return `flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition-all ${isActive ? 'bg-[#e3f2fd] text-[#1a73e8]' : 'text-[#4a4a4a] hover:bg-[#f3f4f6] hover:text-[#1a73e8]'
             }`;
     };
+
 
     return (
         <aside className="w-72 flex-shrink-0 border-r border-[#e0e0e0] bg-white flex-col hidden md:flex shadow-lg">
@@ -36,6 +38,7 @@ export function DashboardSidebar({ subdomain, orgs, activeOrg }: { subdomain: st
             </div>
 
             <nav className="flex-1 px-4 py-6 space-y-2">
+                {/* Ahora el href se mantiene simple como tú querías */}
                 <Link href={`/dashboard`} className={linkClasses('/dashboard')}>
                     <Home className="h-5 w-5" />
                     Inicio

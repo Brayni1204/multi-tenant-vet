@@ -1,9 +1,10 @@
-// app/dashboard/users/page.tsx
+// Ruta: app/(dashboard)/[subdomain]/dashboard/pets/components/PetsAndOwners.tsx
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import UsersList from './UsersList'
 import AddUserForm from './AddUserForm'
+import { Card, CardContent } from '@/components/ui/card'
 
 export default async function UsersPage() {
     const supabase = await createClient()
@@ -37,16 +38,26 @@ export default async function UsersPage() {
 
     if (userOrgError || userOrg?.role !== 'admin') {
         return (
-            <div className="p-4 border rounded-xl bg-red-50">
-                No tienes permisos para gestionar usuarios en esta organización.
-            </div>
+            <Card className="p-6 bg-red-50 border-red-300">
+                <CardContent>
+                    <p className="text-red-800 font-semibold">
+                        Acceso Denegado: No tienes permisos de administrador para gestionar usuarios en esta organización.
+                    </p>
+                </CardContent>
+            </Card>
         )
     }
 
     return (
-        <div className="grid gap-6">
-            <h1 className="text-xl font-semibold">Gestionar Usuarios</h1>
-            <AddUserForm orgId={activeOrg} />
+        <div className="space-y-8">
+            <h1 className="text-3xl font-bold text-gray-800">Gestionar Usuarios</h1>
+
+            {/* Colocamos el formulario de añadir usuario primero */}
+            <Card className="shadow-lg p-6">
+                <AddUserForm orgId={activeOrg} />
+            </Card>
+
+            {/* Luego la lista de usuarios */}
             <UsersList orgId={activeOrg} />
         </div>
     )

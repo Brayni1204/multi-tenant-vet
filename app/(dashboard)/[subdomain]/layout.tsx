@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { get_active_org } from "@/lib/org";
 import { redirect } from "next/navigation";
 import { Metadata } from 'next';
-import { DashboardSidebar } from "@/components/DashboardSidebar"; // Importa el nuevo componente
+import { DashboardSidebar } from "@/components/DashboardSidebar";
 
 export async function generateMetadata({ params }: { params: { subdomain: string } }): Promise<Metadata> {
     const supabase = await createClient();
@@ -33,9 +33,10 @@ export default async function DashboardLayout({
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-        redirect(`/${subdomain}/login`);
+        redirect(`/login`);
     }
 
+    // Se asume que get_active_org ahora devuelve Organization, el tipo completo
     const { orgs, activeOrg } = await get_active_org();
 
     if (!activeOrg) {
@@ -53,6 +54,7 @@ export default async function DashboardLayout({
         .eq('org_id', activeOrg.id)
         .single();
 
+    // Redirigir si no es admin (o si no se encontró rol)
     if (userOrg?.role !== 'admin') {
         redirect(`/`);
     }

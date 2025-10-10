@@ -1,37 +1,38 @@
-// Ruta: components/OrgSwitcher.tsx
 'use client'
 
-import { type Org } from '@/lib/org'
-// ¡CORRECCIÓN! Importamos la acción desde el nuevo archivo central.
+// Importamos el tipo Organization (el tipo correcto)
+import { Organization } from '@/lib/org'
 import { set_active_org } from '@/app/actions'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select" // Importamos los componentes Select
 
 export default function OrgSwitcher({
     orgs,
     activeOrg,
 }: {
-    orgs: Org[]
-    activeOrg: Org | null
+    // Usamos el tipo corregido: Organization
+    orgs: Organization[]
+    activeOrg: Organization | null
 }) {
-    const handleOrgChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const org_id = e.target.value
-        set_active_org(org_id)
+    // La función Select de shadcn devuelve el valor, no el evento
+    const handleOrgChange = (value: string) => {
+        set_active_org(value)
     }
 
     return (
-        <div className="flex items-center gap-2">
-            <select
-                name="org"
-                id="org"
-                value={activeOrg?.id ?? ''}
-                onChange={handleOrgChange}
-                className="border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-                {orgs.map((org) => (
-                    <option key={org.id} value={org.id}>
-                        {org.name}
-                    </option>
-                ))}
-            </select>
+        <div className="flex items-center gap-2 w-full">
+            {/* Usamos el componente Select mejorado */}
+            <Select onValueChange={handleOrgChange} value={activeOrg?.id ?? ''}>
+                <SelectTrigger className="w-full h-10 px-4 text-base font-semibold border-gray-200 shadow-sm transition-all hover:border-blue-300">
+                    <SelectValue placeholder="Seleccionar Clínica" />
+                </SelectTrigger>
+                <SelectContent>
+                    {orgs.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>
+                            {org.name}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
         </div>
     )
 }
